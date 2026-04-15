@@ -8,44 +8,59 @@ class LeanTracker {
   double _reference = 0;
   double _maxLeft = 0.0;
   double _maxRight = 0.0;
+  double _debugRaw = 0;
+
   double get maxLeft => _maxLeft;
   double get maxRight => _maxRight;
+  double get debugRaw => _debugRaw;
+
+  double _lastDisplayedLean = 0;
+  DateTime _lastUpdate = DateTime.now();
+
+  final _controller = StreamController<double>.broadcast();
+  Stream<double> get leanStream => _controller.stream;
+
+  StreamSubscription<AccelerometerEvent>? _subscription;
+
   double smooth(double previous, double current) {
-   return (previous * 0.8) + (current * 0.2);
-}
-    void _updateMaxima(double lean) {
-      if (lean > _maxRight) {
-        _maxRight = lean;
-      }
-      if (lean < _maxLeft) {
-        _maxLeft = lean;
-      }
+    return (previous * 0.8) + (current * 0.2);
+  }
+
+  void _updateMaxima(double lean) {
+    if (lean > _maxRight) {
+      _maxRight = lean;
     }
+    if (lean < _maxLeft) {
+      _maxLeft = lean;
+    }
+  }
+
   double applyCalibration(double rawAngle) {
     return rawAngle - _reference;
   }
-  double _lastDisplayedLean = 0;
-  DateTime _lastUpdate = DateTime.now();
+
   double computeLean(double x, double z) {
     final rawAngle = computeRawAngle(x, z);
     if (rawAngle.isNaN) return double.nan;
 
     final corrected = applyCalibration(rawAngle);
-    _lean = smooth(_lean, corrected);
+    _debugRaw = -corrected;
+
+    _lean = smooth(_lean, -corrected);
+
+    if (_lean.abs() < 2) {
+      _lean = 0;
+    }
+
     _updateMaxima(_lean);
 
     return _lean;
   }
-     void resetMaxima() {
-       _maxLeft = 0.0;
-       _maxRight = 0.0;
-     }
 
-  final _controller = StreamController<double>.broadcast();
-
-  Stream<double> get leanStream => _controller.stream;
-
-  StreamSubscription<AccelerometerEvent>? _subscription;
+  void resetMaxima() {
+    _maxLeft = 0.0;
+    _maxRight = 0.0;
+  }
 
   void start() {
     _subscription = accelerometerEvents.listen((event) {
