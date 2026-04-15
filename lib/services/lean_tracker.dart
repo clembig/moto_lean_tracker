@@ -85,7 +85,7 @@ class LeanTracker {
 
   double computeRawAngle(double x, double z) {
     if (z.abs() < 0.1) return double.nan;
-    return atan(x / z) * 57.2958;
+    return atan2(x, z) * 57.2958;
   }
 
   void calibrate() {
