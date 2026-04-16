@@ -5,15 +5,12 @@ import 'package:sensors_plus/sensors_plus.dart';
 class LeanTracker {
   double _lean = 0;
   double _rawAngle = 0;
-  double _refX = 0;
-  double _refY = 0;
-  double _refZ = 0;
-  double _sideX = 0;
-  double _sideY = 0;
-  double _sideZ = 0;
+  double _mountPitchRad = 0;
+
   double _lastX = 0;
   double _lastY = 0;
   double _lastZ = 0;
+
   double _maxLeft = 0.0;
   double _maxRight = 0.0;
   double _debugRaw = 0;
@@ -44,8 +41,8 @@ class LeanTracker {
   }
 
   double applyCalibration(double rawAngle) {
-     return rawAngle;
-   }
+    return rawAngle;
+  }
 
   double computeLean(double x, double y, double z) {
     final rawAngle = computeRawAngle(x, y, z);
@@ -54,7 +51,7 @@ class LeanTracker {
     final corrected = applyCalibration(rawAngle);
     _debugRaw = corrected;
 
-    _lean = smooth(_lean, corrected);
+    _lean = smooth(_lean, -corrected);
 
     if (_lean.abs() < 2) {
       _lean = 0;
@@ -96,42 +93,15 @@ class LeanTracker {
   }
 
   double computeRawAngle(double x, double y, double z) {
-    final gravityOnSide = (x * _sideX) + (y * _sideY) + (z * _sideZ);
-    final gravityOnUp = (x * _refX) + (y * _refY) + (z * _refZ);
+    final zAligned = (y * sin(_mountPitchRad)) + (z * cos(_mountPitchRad));
 
-    final sideNorm = sqrt((_sideX * _sideX) + (_sideY * _sideY) + (_sideZ * _sideZ));
-    final upNorm = sqrt((_refX * _refX) + (_refY * _refY) + (_refZ * _refZ));
+    if (zAligned.abs() < 0.1) return double.nan;
 
-    if (sideNorm < 0.1 || upNorm < 0.1) {
-      return 0;
-    }
-
-    final side = gravityOnSide / sideNorm;
-    final up = gravityOnUp / upNorm;
-
-    return atan2(side, up) * 57.2958;
+    return atan2(x, zAligned) * 57.2958;
   }
 
   void calibrate() {
-    _refX = _lastX;
-    _refY = _lastY;
-    _refZ = _lastZ;
-    final refNorm = sqrt((_refX * _refX) + (_refY * _refY) + (_refZ * _refZ));
-
-    if (refNorm > 0.1) {
-      final upX = _refX / refNorm;
-      final upY = _refY / refNorm;
-      final upZ = _refZ / refNorm;
-
-      // axe horizontal fixe dans "le monde"
-      const worldForwardX = 0.0;
-      const worldForwardY = 1.0;
-      const worldForwardZ = 0.0;
-
-      _sideX = upY * worldForwardZ - upZ * worldForwardY;
-      _sideY = upZ * worldForwardX - upX * worldForwardZ;
-      _sideZ = upX * worldForwardY - upY * worldForwardX;
-    }
+    _mountPitchRad = atan2(_lastY, _lastZ);
 
     _lean = 0;
     _lastDisplayedLean = 0;
