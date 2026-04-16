@@ -39,8 +39,8 @@ class LeanTracker {
     return rawAngle - _reference;
   }
 
-  double computeLean(double x, double z) {
-    final rawAngle = computeRawAngle(x, z);
+  double computeLean(double x, double y, double z) {
+    final rawAngle = computeRawAngle(x, y, z);
     if (rawAngle.isNaN) return double.nan;
 
     final corrected = applyCalibration(rawAngle);
@@ -64,14 +64,14 @@ class LeanTracker {
 
   void start() {
     _subscription = accelerometerEvents.listen((event) {
-      final smoothed = computeLean(event.x, event.z);
+      final smoothed = computeLean(event.x, event.y, event.z);
       if (smoothed.isNaN) return;
 
       final now = DateTime.now();
       final elapsed = now.difference(_lastUpdate).inMilliseconds;
       final diff = (smoothed - _lastDisplayedLean).abs();
 
-      _rawAngle = computeRawAngle(event.x, event.z);
+      _rawAngle = computeRawAngle(event.x, event.y, event.z);
 
       if (elapsed > 200 && diff > 1) {
         _lean = smoothed;
@@ -83,9 +83,11 @@ class LeanTracker {
     });
   }
 
-  double computeRawAngle(double x, double z) {
-    if (z.abs() < 0.1) return double.nan;
-    return atan2(x, z) * 57.2958;
+  double computeRawAngle(double x, double y, double z) {
+    final denom = sqrt(y * y + z * z);
+    if (denom < 0.1) return double.nan;
+
+    return atan2(x, denom) * 57.2958;
   }
 
   void calibrate() {
