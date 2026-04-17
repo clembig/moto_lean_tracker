@@ -11,6 +11,10 @@ class LeanTracker {
   double _lastY = 0;
   double _lastZ = 0;
 
+  double _lastGyroX = 0;
+  double _lastGyroY = 0;
+  double _lastGyroZ = 0;
+
   double _maxLeft = 0.0;
   double _maxRight = 0.0;
   double _debugRaw = 0;
@@ -26,6 +30,7 @@ class LeanTracker {
   Stream<double> get leanStream => _controller.stream;
 
   StreamSubscription<AccelerometerEvent>? _subscription;
+  StreamSubscription<GyroscopeEvent>? _gyroscopeSubscription;
 
   double smooth(double previous, double current) {
     return (previous * 0.8) + (current * 0.2);
@@ -68,6 +73,12 @@ class LeanTracker {
   }
 
   void start() {
+    _gyroscopeSubscription = gyroscopeEvents.listen((event) {
+      _lastGyroX = event.x;
+      _lastGyroY = event.y;
+      _lastGyroZ = event.z;
+    });
+
     _subscription = accelerometerEvents.listen((event) {
       _lastX = event.x;
       _lastY = event.y;
@@ -111,5 +122,6 @@ class LeanTracker {
 
   void stop() {
     _subscription?.cancel();
+    _gyroscopeSubscription?.cancel();
   }
 }
