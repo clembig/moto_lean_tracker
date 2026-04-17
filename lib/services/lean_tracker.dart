@@ -25,6 +25,7 @@ class LeanTracker {
 
   double _lastDisplayedLean = 0;
   DateTime _lastUpdate = DateTime.now();
+  DateTime? _lastSensorTime;
 
   final _controller = StreamController<double>.broadcast();
   Stream<double> get leanStream => _controller.stream;
@@ -49,14 +50,16 @@ class LeanTracker {
     return rawAngle;
   }
 
-  double computeLean(double x, double y, double z) {
+  double computeLean(double x, double y, double z, double dt) {
     final rawAngle = computeRawAngle(x, y, z);
     if (rawAngle.isNaN) return double.nan;
 
     final corrected = applyCalibration(rawAngle);
-    _debugRaw = corrected;
+    final accelLean = -corrected;
 
-    _lean = smooth(_lean, -corrected);
+    _debugRaw = accelLean;
+
+    _lean = smooth(_lean, accelLean);
 
     if (_lean.abs() < 2) {
       _lean = 0;
@@ -80,24 +83,30 @@ class LeanTracker {
     });
 
     _subscription = accelerometerEvents.listen((event) {
+      final nowSensor = DateTime.now();
+
+      double dt = 0;
+      if (_lastSensorTime != null) {
+        dt = nowSensor.difference(_lastSensorTime!).inMilliseconds / 1000.0;
+      }
+      _lastSensorTime = nowSensor;
+
       _lastX = event.x;
       _lastY = event.y;
       _lastZ = event.z;
 
-      final smoothed = computeLean(event.x, event.y, event.z);
+      final smoothed = computeLean(event.x, event.y, event.z, dt);
       if (smoothed.isNaN) return;
 
       final now = DateTime.now();
       final elapsed = now.difference(_lastUpdate).inMilliseconds;
-      final diff = (smoothed - _lastDisplayedLean).abs();
 
       _rawAngle = computeRawAngle(event.x, event.y, event.z);
 
-      if (elapsed > 200 && diff > 1) {
+      if (elapsed > 50) {
         _lean = smoothed;
         _lastDisplayedLean = smoothed;
         _lastUpdate = now;
-
         _controller.add(_lean);
       }
     });
@@ -117,6 +126,7 @@ class LeanTracker {
     _lean = 0;
     _lastDisplayedLean = 0;
     _lastUpdate = DateTime.now();
+    _lastSensorTime = null;
     _controller.add(0);
   }
 
