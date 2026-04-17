@@ -76,6 +76,13 @@ class LeanTracker {
   }
 
   void start() {
+    _subscription?.cancel();
+    _gyroscopeSubscription?.cancel();
+
+    _subscription = null;
+    _gyroscopeSubscription = null;
+    _lastSensorTime = null;
+
     _gyroscopeSubscription = gyroscopeEvents.listen((event) {
       _lastGyroX = event.x;
       _lastGyroY = event.y;
