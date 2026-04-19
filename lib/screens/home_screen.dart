@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'angle_test_screen.dart';
 import 'calibration_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -13,6 +14,15 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  void _goToAngleTest(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const AngleTestScreen(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -20,12 +30,25 @@ class HomeScreen extends StatelessWidget {
         title: const Text('Moto Lean Tracker'),
       ),
       body: Center(
-        child: ElevatedButton(
-          onPressed: () => _goToCalibration(context),
-          child: const Text(
-            'Demarrer une session',
-            style: TextStyle(fontSize: 24),
-          ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(
+              onPressed: () => _goToCalibration(context),
+              child: const Text(
+                'Demarrer une session',
+                style: TextStyle(fontSize: 24),
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () => _goToAngleTest(context),
+              child: const Text(
+                'Tester l angle',
+                style: TextStyle(fontSize: 24),
+              ),
+            ),
+          ],
         ),
       ),
     );
