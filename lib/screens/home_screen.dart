@@ -23,7 +23,7 @@ class HomeScreen extends StatelessWidget {
         child: ElevatedButton(
           onPressed: () => _goToCalibration(context),
           child: const Text(
-            'Start Session',
+            'Demarrer une session',
             style: TextStyle(fontSize: 24),
           ),
         ),

@@ -14,19 +14,19 @@ class RideStatsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Ride stats'),
+        title: const Text('Resume de la ride'),
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Max gauche : ${session.maxLeft} deg',
+              'Max gauche : ${session.maxLeft}',
               style: const TextStyle(fontSize: 28),
             ),
             const SizedBox(height: 16),
             Text(
-              'Max droite : ${session.maxRight} deg',
+              'Max droite : ${session.maxRight}',
               style: const TextStyle(fontSize: 28),
             ),
             const SizedBox(height: 16),
@@ -49,7 +49,7 @@ class RideStatsScreen extends StatelessWidget {
                       );
                     },
               child: const Text(
-                'Open Replay',
+                'Voir le replay',
                 style: TextStyle(fontSize: 22),
               ),
             ),
@@ -59,7 +59,7 @@ class RideStatsScreen extends StatelessWidget {
                 Navigator.popUntil(context, (route) => route.isFirst);
               },
               child: const Text(
-                'Back Home',
+                'Retour a l accueil',
                 style: TextStyle(fontSize: 22),
               ),
             ),

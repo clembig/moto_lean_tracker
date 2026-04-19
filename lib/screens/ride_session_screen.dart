@@ -25,7 +25,7 @@ class _RideSessionScreenState extends State<RideSessionScreen> {
   double _lean = 0;
   double _maxLeft = 0;
   double _maxRight = 0;
-  String _gpsStatus = 'GPS: checking...';
+  String _gpsStatus = 'GPS : verification...';
 
   @override
   void initState() {
@@ -58,7 +58,9 @@ class _RideSessionScreenState extends State<RideSessionScreen> {
     if (!mounted) return;
 
     setState(() {
-      _gpsStatus = hasPermission ? 'GPS: permission granted' : 'GPS: permission denied';
+      _gpsStatus = hasPermission
+          ? 'GPS : autorisation accordee'
+          : 'GPS : autorisation refusee';
     });
   }
 
@@ -90,14 +92,14 @@ class _RideSessionScreenState extends State<RideSessionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Ride in progress'),
+        title: const Text('Ride en cours'),
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Lean: ${_lean.round()}°',
+              'Angle : ${_lean.round()}',
               style: const TextStyle(
                 fontSize: 48,
                 fontWeight: FontWeight.bold,
@@ -105,7 +107,7 @@ class _RideSessionScreenState extends State<RideSessionScreen> {
             ),
             const SizedBox(height: 20),
             const Text(
-              'Drive safe',
+              'Bonne route',
               style: TextStyle(fontSize: 18),
             ),
             const SizedBox(height: 12),
@@ -117,7 +119,7 @@ class _RideSessionScreenState extends State<RideSessionScreen> {
             ElevatedButton(
               onPressed: () => _stopRide(context),
               child: const Text(
-                'Stop Ride',
+                'Terminer la ride',
                 style: TextStyle(fontSize: 22),
               ),
             ),

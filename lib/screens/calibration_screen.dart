@@ -37,7 +37,7 @@ class _CalibrationScreenState extends State<CalibrationScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Calibration OK'),
+        content: Text('Calibration terminee'),
       ),
     );
   }
@@ -68,7 +68,7 @@ class _CalibrationScreenState extends State<CalibrationScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Lean: ${_lean.round()}°',
+              'Angle : ${_lean.round()}',
               style: const TextStyle(
                 fontSize: 48,
                 fontWeight: FontWeight.bold,
@@ -76,7 +76,7 @@ class _CalibrationScreenState extends State<CalibrationScreen> {
             ),
             const SizedBox(height: 20),
             const Text(
-              'Drive safe',
+              'Place la moto droite avant de calibrer',
               style: TextStyle(fontSize: 18),
             ),
             const SizedBox(height: 40),
@@ -91,7 +91,7 @@ class _CalibrationScreenState extends State<CalibrationScreen> {
             ElevatedButton(
               onPressed: () => _startRide(context),
               child: const Text(
-                'Start Ride',
+                'Demarrer la ride',
                 style: TextStyle(fontSize: 22),
               ),
             ),
