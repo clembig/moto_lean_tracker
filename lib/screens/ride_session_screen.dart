@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../models/ride_point.dart';
-import '../services/location_service.dart';
+import '../models/ride_session.dart';
 import '../services/lean_tracker.dart';
+import '../services/ride_recorder.dart';
 import 'ride_stats_screen.dart';
 
 class RideSessionScreen extends StatefulWidget {
@@ -18,26 +18,24 @@ class RideSessionScreen extends StatefulWidget {
 }
 
 class _RideSessionScreenState extends State<RideSessionScreen> {
-  static const double _maxAcceptedAccuracy = 20;
   StreamSubscription<double>? _leanSubscription;
-  final LocationService _locationService = LocationService();
-  final List<RidePoint> _ridePoints = [];
+  final RideRecorder _rideRecorder = RideRecorder();
+  late final DateTime _startedAt;
 
   double _lean = 0;
   double _maxLeft = 0;
   double _maxRight = 0;
-  DateTime? _lastPointTime;
-  bool _isCapturingPoint = false;
   String _gpsStatus = 'GPS: checking...';
 
   @override
   void initState() {
     super.initState();
 
+    _startedAt = DateTime.now();
     _initLocationPermission();
 
     _leanSubscription = widget.tracker.leanStream.listen((value) {
-      _captureRidePoint(value);
+      _rideRecorder.capturePoint(value);
 
       if (!mounted) return;
 
@@ -56,7 +54,7 @@ class _RideSessionScreenState extends State<RideSessionScreen> {
   }
 
   Future<void> _initLocationPermission() async {
-    final hasPermission = await _locationService.requestPermission();
+    final hasPermission = await _rideRecorder.requestPermission();
     if (!mounted) return;
 
     setState(() {
@@ -64,52 +62,20 @@ class _RideSessionScreenState extends State<RideSessionScreen> {
     });
   }
 
-  Future<void> _captureRidePoint(double lean) async {
-    final now = DateTime.now();
-
-    if (_isCapturingPoint) {
-      return;
-    }
-
-    if (_lastPointTime != null &&
-        now.difference(_lastPointTime!).inMilliseconds < 1000) {
-      return;
-    }
-
-    _isCapturingPoint = true;
-
-    try {
-      final position = await _locationService.getCurrentPosition();
-      if (position == null) return;
-      if (position.accuracy > _maxAcceptedAccuracy) return;
-
-      _ridePoints.add(
-        RidePoint(
-          timestamp: now,
-          latitude: position.latitude,
-          longitude: position.longitude,
-          lean: lean,
-          accuracy: position.accuracy,
-        ),
-      );
-
-      _lastPointTime = now;
-    } finally {
-      _isCapturingPoint = false;
-    }
-  }
-
   void _stopRide(BuildContext context) {
     widget.tracker.stop();
+    final session = RideSession(
+      startedAt: _startedAt,
+      endedAt: DateTime.now(),
+      maxLeft: _maxLeft.abs().round(),
+      maxRight: _maxRight.abs().round(),
+      ridePoints: _rideRecorder.ridePoints,
+    );
 
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => RideStatsScreen(
-          maxLeft: _maxLeft.abs().round(),
-          maxRight: _maxRight.abs().round(),
-          ridePoints: List.unmodifiable(_ridePoints),
-        ),
+        builder: (context) => RideStatsScreen(session: session),
       ),
     );
   }

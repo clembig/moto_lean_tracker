@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import '../models/ride_point.dart';
+import '../models/ride_session.dart';
+import '../widgets/rider_lean_indicator.dart';
 
 class RideReplayScreen extends StatefulWidget {
   const RideReplayScreen({
     super.key,
-    required this.ridePoints,
+    required this.session,
   });
 
-  final List<RidePoint> ridePoints;
+  final RideSession session;
 
   @override
   State<RideReplayScreen> createState() => _RideReplayScreenState();
@@ -21,7 +22,7 @@ class _RideReplayScreenState extends State<RideReplayScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final points = widget.ridePoints;
+    final points = widget.session.ridePoints;
     final pointCount = points.length;
     final currentIndex =
         pointCount == 0 ? 0 : _sliderValue.round().clamp(0, pointCount - 1);
@@ -105,11 +106,29 @@ class _RideReplayScreenState extends State<RideReplayScreen> {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          Text('Lat: ${currentPoint.latitude}'),
-                          Text('Lng: ${currentPoint.longitude}'),
-                          Text('Lean: ${currentPoint.lean.round()} deg'),
-                          Text('Accuracy: ${currentPoint.accuracy.round()} m'),
-                          Text('Time: ${currentPoint.timestamp}'),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              RiderLeanIndicator(lean: currentPoint.lean),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('Lat: ${currentPoint.latitude}'),
+                                    Text('Lng: ${currentPoint.longitude}'),
+                                    Text(
+                                      'Lean: ${currentPoint.lean.round()} deg',
+                                    ),
+                                    Text(
+                                      'Accuracy: ${currentPoint.accuracy.round()} m',
+                                    ),
+                                    Text('Time: ${currentPoint.timestamp}'),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                           const SizedBox(height: 24),
                           Slider(
                             value: _sliderValue.clamp(
