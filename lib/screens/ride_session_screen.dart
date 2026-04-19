@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../models/ride_point.dart';
+import '../services/location_service.dart';
 import '../services/lean_tracker.dart';
 import 'ride_stats_screen.dart';
 
@@ -16,17 +18,27 @@ class RideSessionScreen extends StatefulWidget {
 }
 
 class _RideSessionScreenState extends State<RideSessionScreen> {
+  static const double _maxAcceptedAccuracy = 20;
   StreamSubscription<double>? _leanSubscription;
+  final LocationService _locationService = LocationService();
+  final List<RidePoint> _ridePoints = [];
 
   double _lean = 0;
   double _maxLeft = 0;
   double _maxRight = 0;
+  DateTime? _lastPointTime;
+  bool _isCapturingPoint = false;
+  String _gpsStatus = 'GPS: checking...';
 
   @override
   void initState() {
     super.initState();
 
+    _initLocationPermission();
+
     _leanSubscription = widget.tracker.leanStream.listen((value) {
+      _captureRidePoint(value);
+
       if (!mounted) return;
 
       setState(() {
@@ -43,6 +55,50 @@ class _RideSessionScreenState extends State<RideSessionScreen> {
     });
   }
 
+  Future<void> _initLocationPermission() async {
+    final hasPermission = await _locationService.requestPermission();
+    if (!mounted) return;
+
+    setState(() {
+      _gpsStatus = hasPermission ? 'GPS: permission granted' : 'GPS: permission denied';
+    });
+  }
+
+  Future<void> _captureRidePoint(double lean) async {
+    final now = DateTime.now();
+
+    if (_isCapturingPoint) {
+      return;
+    }
+
+    if (_lastPointTime != null &&
+        now.difference(_lastPointTime!).inMilliseconds < 1000) {
+      return;
+    }
+
+    _isCapturingPoint = true;
+
+    try {
+      final position = await _locationService.getCurrentPosition();
+      if (position == null) return;
+      if (position.accuracy > _maxAcceptedAccuracy) return;
+
+      _ridePoints.add(
+        RidePoint(
+          timestamp: now,
+          latitude: position.latitude,
+          longitude: position.longitude,
+          lean: lean,
+          accuracy: position.accuracy,
+        ),
+      );
+
+      _lastPointTime = now;
+    } finally {
+      _isCapturingPoint = false;
+    }
+  }
+
   void _stopRide(BuildContext context) {
     widget.tracker.stop();
 
@@ -52,6 +108,7 @@ class _RideSessionScreenState extends State<RideSessionScreen> {
         builder: (context) => RideStatsScreen(
           maxLeft: _maxLeft.abs().round(),
           maxRight: _maxRight.abs().round(),
+          ridePoints: List.unmodifiable(_ridePoints),
         ),
       ),
     );
@@ -84,6 +141,11 @@ class _RideSessionScreenState extends State<RideSessionScreen> {
             const Text(
               'Drive safe',
               style: TextStyle(fontSize: 18),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _gpsStatus,
+              style: const TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 40),
             ElevatedButton(
