@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/ride_session.dart';
 import '../services/lean_tracker.dart';
 import '../services/ride_recorder.dart';
+import '../services/ride_storage_service.dart';
 import 'ride_stats_screen.dart';
 
 class RideSessionScreen extends StatefulWidget {
@@ -26,6 +27,7 @@ class _RideSessionScreenState extends State<RideSessionScreen> {
   double _maxLeft = 0;
   double _maxRight = 0;
   String _gpsStatus = 'GPS : verification...';
+  bool _isSavingRide = false;
 
   @override
   void initState() {
@@ -64,15 +66,39 @@ class _RideSessionScreenState extends State<RideSessionScreen> {
     });
   }
 
-  void _stopRide(BuildContext context) {
+  Future<void> _stopRide(BuildContext context) async {
+    if (_isSavingRide) {
+      return;
+    }
+
+    setState(() {
+      _isSavingRide = true;
+    });
+
     widget.tracker.stop();
-    final session = RideSession(
+    var session = RideSession(
       startedAt: _startedAt,
       endedAt: DateTime.now(),
       maxLeft: _maxLeft.abs().round(),
       maxRight: _maxRight.abs().round(),
       ridePoints: _rideRecorder.ridePoints,
     );
+
+    try {
+      session = await RideStorageService.instance.saveSession(session);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Impossible de sauvegarder la ride localement'),
+          ),
+        );
+      }
+    }
+
+    if (!mounted) {
+      return;
+    }
 
     Navigator.pushReplacement(
       context,
@@ -117,7 +143,7 @@ class _RideSessionScreenState extends State<RideSessionScreen> {
             ),
             const SizedBox(height: 40),
             ElevatedButton(
-              onPressed: () => _stopRide(context),
+              onPressed: _isSavingRide ? null : () => _stopRide(context),
               child: const Text(
                 'Terminer la ride',
                 style: TextStyle(fontSize: 22),

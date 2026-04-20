@@ -23,6 +23,8 @@ class _RideReplayScreenState extends State<RideReplayScreen> {
   final MapController _mapController = MapController();
   Timer? _playTimer;
   double _sliderValue = 0;
+  static const Duration _minPlaybackStep = Duration(milliseconds: 80);
+  static const Duration _maxPlaybackStep = Duration(milliseconds: 450);
 
   @override
   void dispose() {
@@ -66,23 +68,30 @@ class _RideReplayScreenState extends State<RideReplayScreen> {
     final currentPoint = points[currentIndex];
     final nextPoint = points[nextIndex];
     final rawDelay = nextPoint.timestamp.difference(currentPoint.timestamp);
-    final delay = rawDelay.inMilliseconds < 80
-        ? const Duration(milliseconds: 80)
-        : rawDelay;
+    final delay = _clampPlaybackDelay(rawDelay);
 
     _playTimer = Timer(delay, () {
+      _playTimer = null;
+
       if (!mounted) {
-        _playTimer?.cancel();
-        _playTimer = null;
         return;
       }
 
       _moveToPoint(nextPoint, nextIndex.toDouble());
-
-      if (_playTimer != null) {
-        _scheduleNextPlaybackStep();
-      }
+      _scheduleNextPlaybackStep();
     });
+  }
+
+  Duration _clampPlaybackDelay(Duration delay) {
+    if (delay < _minPlaybackStep) {
+      return _minPlaybackStep;
+    }
+
+    if (delay > _maxPlaybackStep) {
+      return _maxPlaybackStep;
+    }
+
+    return delay;
   }
 
   void _moveToPoint(RidePoint point, double sliderValue) {

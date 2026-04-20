@@ -58,6 +58,10 @@ class RideStatsScreen extends StatelessWidget {
               onPressed: () {
                 Navigator.popUntil(context, (route) => route.isFirst);
               },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.tertiary,
+                foregroundColor: Colors.white,
+              ),
               child: const Text(
                 'Retour a l accueil',
                 style: TextStyle(fontSize: 22),

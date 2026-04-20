@@ -82,6 +82,10 @@ class _CalibrationScreenState extends State<CalibrationScreen> {
             const SizedBox(height: 40),
             ElevatedButton(
               onPressed: () => _calibrate(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.secondary,
+                foregroundColor: Theme.of(context).colorScheme.onSecondary,
+              ),
               child: const Text(
                 'Calibrer',
                 style: TextStyle(fontSize: 22),
